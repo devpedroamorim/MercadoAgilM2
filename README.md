@@ -28,3 +28,4 @@ financeiros dos pedidos confirmados.
 - [Decisões de modelagem](./docs/modelagem-banco.md)
 - [Comparação dos tipos de banco de dados](./docs/decisoes-banco.md)
 - [Código-fonte do DER (DBML)](./docs/der.dbml)
+- [Contratos da API](./docs/contratos-api.md)
