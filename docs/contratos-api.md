@@ -2,17 +2,20 @@
 
 ## Objetivo
 
-Definimos aqui os formatos de comunicação entre os clientes e a API do MercadoÁgil.
+Definimos os formatos de comunicação entre os clientes
+e a API do MercadoÁgil.
 
-Padronizamos as requisições e respostas para facilitar o desenvolvimento entre os grupos.
+Padronizamos as requisições e respostas para facilitar
+o desenvolvimento entre os grupos.
 
 ## Convenções
 
 - Utilizamos JSON na comunicação.
-- Utilizamos nomes de campos em inglês e `snake_case`.
+- Utilizamos campos em inglês e snake_case.
 - Mantemos as rotas em português, conforme a rubrica.
 - Utilizamos JWT para autenticação.
-- Nunca incluímos CPF, senha ou hash da senha nas respostas da API.
+- Utilizamos bcrypt para gerar o hash das senhas.
+- Nunca retornamos CPF, senha ou hash da senha.
 
 ## Métodos HTTP
 
@@ -37,7 +40,7 @@ Padronizamos as requisições e respostas para facilitar o desenvolvimento entre
 
 ## Formato padrão de erros
 
-Retornamos os erros de todas as rotas no mesmo formato:
+Retornamos todos os erros no seguinte formato:
 
 ```json
 {
@@ -53,7 +56,8 @@ Criamos uma conta de usuário e seu respectivo perfil.
 
 **Acesso:** Público.
 
-Permitimos o registro público apenas de clientes e vendedores. Criamos contas de administrador exclusivamente pelo seeder.
+Permitimos o registro público de clientes e vendedores.
+Criamos administradores exclusivamente pelo seeder.
 
 #### Requisição — Cliente
 
@@ -127,13 +131,16 @@ Autenticamos o usuário e retornamos um token JWT.
 | 400    | Dados inválidos            |
 | 401    | E-mail ou senha incorretos |
 
-### Utilização do token JWT
+### Utilização do JWT
 
-Exigimos o envio do token no cabeçalho `Authorization` das requisições às rotas protegidas:
+Exigimos o envio do token no cabeçalho Authorization
+das requisições às rotas protegidas.
 
 ```http
 Authorization: Bearer jwt_token
 ```
+
+Retornamos 401 para tokens ausentes, inválidos ou vencidos.
 
 ## Produtos
 
@@ -166,17 +173,13 @@ Listamos os produtos disponíveis no marketplace.
 ]
 ```
 
-Na ausência de produtos, retornamos uma lista vazia (`[]`).
+Retornamos um array vazio na ausência de produtos.
 
 ### GET /produtos/:id
 
 Consultamos um produto específico pelo ID.
 
 **Acesso:** Público.
-
-#### Exemplo
-
-GET /produtos/1
 
 #### Resposta — 200 OK
 
@@ -204,7 +207,7 @@ Cadastramos um novo produto.
 
 **Acesso:** Vendedor autenticado.
 
-Identificamos o vendedor pelo token JWT.
+Identificamos o vendedor através do token JWT.
 
 #### Requisição
 
@@ -236,12 +239,12 @@ Identificamos o vendedor pelo token JWT.
 | ------ | ------------------------ |
 | 400    | Dados inválidos          |
 | 401    | Usuário não autenticado  |
-| 403    | Usuário não é vendedor   |
+| 403    | Usuário sem permissão    |
 | 404    | Categoria não encontrada |
 
 ### PUT /produtos/:id
 
-Atualizamos as informações de um produto existente.
+Atualizamos as informações de um produto.
 
 **Acesso:** Vendedor proprietário do produto.
 
@@ -269,7 +272,10 @@ Atualizamos as informações de um produto existente.
 }
 ```
 
-Ao atualizar o preço de um produto, preservamos o preço histórico dos itens de pedidos já confirmados.
+Preservamos as informações históricas dos itens dos pedidos.
+
+Não permitimos a alteração do vendedor proprietário
+através desta rota.
 
 #### Possíveis erros
 
@@ -277,7 +283,7 @@ Ao atualizar o preço de um produto, preservamos o preço histórico dos itens d
 | ------ | ----------------------------------- |
 | 400    | Dados inválidos                     |
 | 401    | Usuário não autenticado             |
-| 403    | Usuário não possui permissão        |
+| 403    | Usuário sem permissão               |
 | 404    | Produto ou categoria não encontrada |
 
 ### DELETE /produtos/:id
@@ -300,17 +306,18 @@ Excluímos um produto do marketplace.
 | ------ | ----------------------------- |
 | 400    | ID inválido                   |
 | 401    | Usuário não autenticado       |
-| 403    | Usuário não possui permissão  |
+| 403    | Usuário sem permissão         |
 | 404    | Produto não encontrado        |
 | 409    | Produto associado a um pedido |
 
-Bloqueamos a exclusão de produtos associados a qualquer pedido, retornando 409. Assim, preservamos o histórico das compras e a integridade dos relacionamentos.
+Bloqueamos a exclusão de produtos associados a qualquer
+pedido para preservar o histórico das compras.
 
 ## Cupons
 
 ### POST /cupons
 
-Cadastramos um novo cupom de desconto.
+Cadastramos um novo cupom.
 
 **Acesso:** Administrador.
 
@@ -347,7 +354,7 @@ Cadastramos um novo cupom de desconto.
 | ------ | ----------------------------- |
 | 400    | Dados inválidos               |
 | 401    | Usuário não autenticado       |
-| 403    | Usuário não é administrador   |
+| 403    | Usuário sem permissão         |
 | 409    | Código de cupom já cadastrado |
 
 ### GET /cupons
@@ -374,14 +381,14 @@ Listamos os cupons cadastrados.
 
 #### Possíveis erros
 
-| Código | Motivo                      |
-| ------ | --------------------------- |
-| 401    | Usuário não autenticado     |
-| 403    | Usuário não é administrador |
+| Código | Motivo                  |
+| ------ | ----------------------- |
+| 401    | Usuário não autenticado |
+| 403    | Usuário sem permissão   |
 
 ### DELETE /cupons/:id
 
-Excluímos um cupom cadastrado.
+Excluímos um cupom.
 
 **Acesso:** Administrador.
 
@@ -399,21 +406,22 @@ Excluímos um cupom cadastrado.
 | ------ | --------------------------- |
 | 400    | ID inválido                 |
 | 401    | Usuário não autenticado     |
-| 403    | Usuário não é administrador |
+| 403    | Usuário sem permissão       |
 | 404    | Cupom não encontrado        |
 | 409    | Cupom associado a um pedido |
 
-Bloqueamos a exclusão de cupons associados a qualquer pedido, retornando 409 para preservar o histórico.
+Bloqueamos a exclusão de cupons associados a pedidos
+para preservar o histórico.
 
 ## Pedidos
 
 ### POST /pedidos
 
-Criamos um novo pedido com status `aberto`.
+Criamos um pedido com status aberto.
 
 **Acesso:** Cliente autenticado.
 
-Identificamos o cliente pelo token JWT.
+Identificamos o cliente através do token JWT.
 
 #### Requisição
 
@@ -460,7 +468,16 @@ Identificamos o cliente pelo token JWT.
 }
 ```
 
-Consultamos o preço dos produtos no servidor e não aceitamos preços informados pelo cliente.
+Consultamos os preços dos produtos no servidor.
+
+Não aceitamos preços ou valores financeiros informados
+pelo cliente.
+
+Registramos o preço unitário, a categoria e os valores
+de tributos e comissões durante a criação dos itens.
+
+Não reservamos nem retiramos produtos do estoque
+durante a criação de um pedido aberto.
 
 Neste exemplo, consideramos um cliente da região Nordeste.
 
@@ -470,7 +487,7 @@ Neste exemplo, consideramos um cliente da região Nordeste.
 | ------ | ------------------------------- |
 | 400    | Dados inválidos ou pedido vazio |
 | 401    | Usuário não autenticado         |
-| 403    | Usuário não é cliente           |
+| 403    | Usuário sem permissão           |
 | 404    | Produto não encontrado          |
 
 ### GET /pedidos
@@ -479,7 +496,8 @@ Listamos os pedidos.
 
 **Acesso:** Cliente ou administrador.
 
-Retornamos somente os próprios pedidos para clientes e todos os pedidos para administradores.
+Retornamos apenas os próprios pedidos para clientes
+e todos os pedidos para administradores.
 
 #### Resposta — 200 OK
 
@@ -550,7 +568,7 @@ Consultamos os detalhes de um pedido.
 
 ### POST /pedidos/:id/cupons
 
-Aplicamos um cupom de desconto a um pedido aberto.
+Aplicamos um cupom a um pedido aberto.
 
 **Acesso:** Cliente proprietário do pedido.
 
@@ -567,7 +585,20 @@ Aplicamos um cupom de desconto a um pedido aberto.
 ```json
 {
   "id": 1,
+  "customer_id": 1,
   "status": "aberto",
+  "items": [
+    {
+      "product_id": 1,
+      "quantity": 1,
+      "unit_price": 120.0
+    },
+    {
+      "product_id": 2,
+      "quantity": 1,
+      "unit_price": 80.0
+    }
+  ],
   "coupons": ["BEMVINDO10"],
   "subtotal": 200.0,
   "discount": 20.0,
@@ -579,24 +610,26 @@ Aplicamos um cupom de desconto a um pedido aberto.
 
 #### Regras
 
-- Permitimos a aplicação de cupons apenas em pedidos abertos.
-- Aceitamos somente cupons dentro da validade.
-- Verificamos o valor mínimo exigido em relação ao subtotal.
-- Limitamos a quantidade a dois cupons por pedido.
-- Impedimos a aplicação repetida do mesmo cupom.
-- Aceitamos cupons não cumulativos apenas de forma individual.
+- Permitimos a aplicação apenas em pedidos abertos.
+- Aceitamos apenas cupons válidos.
+- Verificamos o subtotal mínimo.
+- Permitimos até dois cupons por pedido.
+- Impedimos cupons duplicados.
+- Utilizamos cupons não cumulativos individualmente.
 - Limitamos os descontos sobre o subtotal a 30%.
-- Aplicamos os cupons nesta ordem: percentual, fixo e frete.
+- Aplicamos primeiro os cupons percentuais, depois os fixos
+  e, por último, os cupons de frete.
+- Impedimos valores totais negativos.
 
 #### Possíveis erros
 
-| Código | Motivo                                         |
-| ------ | ---------------------------------------------- |
-| 400    | Dados inválidos                                |
-| 401    | Usuário não autenticado                        |
-| 403    | Usuário sem permissão                          |
-| 404    | Pedido ou cupom não encontrado                 |
-| 409    | Cupom vencido, repetido ou outra regra violada |
+| Código | Motivo                                   |
+| ------ | ---------------------------------------- |
+| 400    | Dados inválidos                          |
+| 401    | Usuário não autenticado                  |
+| 403    | Usuário sem permissão                    |
+| 404    | Pedido ou cupom não encontrado           |
+| 409    | Violação das regras de cupons ou pedidos |
 
 ### POST /pedidos/:id/confirmar
 
@@ -606,13 +639,19 @@ Confirmamos um pedido aberto.
 
 Não exigimos corpo na requisição.
 
-Antes de confirmar o pedido, verificamos o estoque de todos os produtos e validamos novamente os cupons.
+Verificamos o estoque de todos os produtos e validamos
+novamente os cupons antes de confirmar o pedido.
 
-Em caso de estoque insuficiente para qualquer produto, não confirmamos o pedido nem retiramos nenhum item do estoque.
+Em caso de estoque insuficiente, não confirmamos o pedido
+nem retiramos qualquer produto do estoque.
+
+Mantemos o preço, a categoria e os valores de tributos
+e comissões registrados nos itens.
 
 #### Resposta — 200 OK
 
-Neste exemplo, utilizamos o pedido de aceite da rubrica, com os cupons BEMVINDO10 e PDA15 já aplicados:
+Utilizamos o pedido de exemplo da rubrica, com os cupons
+BEMVINDO10 e PDA15 já aplicados.
 
 ```json
 {
@@ -661,7 +700,7 @@ Neste exemplo, utilizamos o pedido de aceite da rubrica, com os cupons BEMVINDO1
 }
 ```
 
-Informamos na resposta todos os itens com estoque insuficiente.
+Informamos todos os itens com estoque insuficiente.
 
 ### POST /pedidos/:id/cancelar
 
@@ -671,7 +710,12 @@ Cancelamos um pedido.
 
 Não exigimos corpo na requisição.
 
-Ao cancelar um pedido confirmado, devolvemos os produtos ao estoque. Ao cancelar um pedido aberto, mantemos o estoque inalterado.
+Ao cancelar um pedido confirmado, devolvemos os produtos
+ao estoque.
+
+Ao cancelar um pedido aberto, mantemos o estoque inalterado.
+
+Preservamos os itens e valores históricos após o cancelamento.
 
 #### Resposta — 200 OK
 
@@ -694,13 +738,18 @@ Ao cancelar um pedido confirmado, devolvemos os produtos ao estoque. Ao cancelar
 
 ## Relatórios
 
-Consideramos somente pedidos confirmados em todos os relatórios.
+Consideramos somente pedidos confirmados nos relatórios.
 
-Utilizamos consultas SQL com `JOIN`, funções de agregação como `SUM` e `COUNT`, e agrupamentos com `GROUP BY`.
+Utilizamos consultas SQL com JOIN e funções de agregação,
+como SUM, COUNT e GROUP BY.
+
+Utilizamos os preços, categorias e valores de comissões
+registrados historicamente em order_items.
 
 ### GET /relatorios/faturamento
 
-Retornamos o faturamento total, a quantidade de pedidos confirmados e o ticket médio.
+Retornamos o faturamento total, a quantidade de pedidos
+confirmados e o ticket médio.
 
 **Acesso:** Administrador.
 
@@ -716,7 +765,10 @@ Retornamos o faturamento total, a quantidade de pedidos confirmados e o ticket m
 
 ### GET /relatorios/por-categoria
 
-Retornamos o faturamento bruto por categoria, antes dos descontos.
+Retornamos o faturamento bruto por categoria,
+antes dos descontos.
+
+Utilizamos a categoria histórica de cada item.
 
 **Acesso:** Administrador.
 
@@ -739,11 +791,18 @@ Retornamos o faturamento bruto por categoria, antes dos descontos.
 
 ### GET /relatorios/repasse
 
-Retornamos o valor bruto, a comissão e o valor a repassar para cada vendedor.
+Retornamos o valor bruto, a comissão e o valor
+a repassar para cada vendedor.
 
 **Acesso:** Administrador ou vendedor.
 
-Retornamos todos os repasses para administradores e somente o próprio repasse para cada vendedor.
+Retornamos todos os repasses para administradores
+e apenas o próprio repasse para vendedores.
+
+Utilizamos os valores históricos de comissão
+registrados em order_items.
+
+Não descontamos cupons nem frete dos repasses.
 
 #### Resposta — 200 OK
 
@@ -766,11 +825,9 @@ Retornamos todos os repasses para administradores e somente o próprio repasse p
 ]
 ```
 
-Não descontamos os cupons nem o frete do repasse dos vendedores.
-
 ### GET /relatorios/top-produtos
 
-Retornamos os três produtos mais vendidos, considerando a quantidade de unidades vendidas.
+Retornamos os três produtos mais vendidos por quantidade.
 
 **Acesso:** Administrador.
 
@@ -791,7 +848,8 @@ Retornamos os três produtos mais vendidos, considerando a quantidade de unidade
 ]
 ```
 
-Com menos de três produtos vendidos, retornamos somente os produtos com vendas registradas.
+Retornamos menos de três produtos quando não possuímos
+vendas suficientes para preencher o relatório.
 
 #### Possíveis erros dos relatórios
 
@@ -800,19 +858,90 @@ Com menos de três produtos vendidos, retornamos somente os produtos com vendas 
 | 401    | Usuário não autenticado |
 | 403    | Usuário sem permissão   |
 
+## Regras financeiras
+
+### Frete
+
+Calculamos o frete utilizando a taxa da região de entrega
+mais R$ 1,50 por unidade comprada.
+
+| Região       | Taxa     |
+| ------------ | -------- |
+| Norte        | R$ 35,00 |
+| Nordeste     | R$ 25,00 |
+| Centro-Oeste | R$ 30,00 |
+| Sudeste      | R$ 20,00 |
+| Sul          | R$ 22,00 |
+
+Oferecemos frete gratuito a partir de R$ 300,00,
+considerando o subtotal após os descontos.
+
+Também oferecemos frete gratuito com um cupom do tipo frete.
+
+### Tributos e comissões
+
+Calculamos os tributos e as comissões sobre o valor bruto
+dos itens, antes dos descontos.
+
+Armazenamos os respectivos valores históricos em order_items.
+
+Informamos os tributos na resposta através do campo taxes,
+somando os valores de tax_amount dos itens.
+
+Não adicionamos os tributos ao total da compra.
+
+Calculamos o repasse subtraindo a comissão histórica
+do valor bruto dos itens de cada vendedor.
+
+### Total do pedido
+
+Utilizamos a seguinte fórmula:
+
+total = subtotal - discount + shipping
+
+Preservamos os valores finais após a confirmação do pedido.
+
 ## Decisões gerais
 
-- Utilizamos IDs como números inteiros positivos.
-- Utilizamos números JSON para valores monetários e calculamos os valores com precisão de centavos.
-- Nunca retornamos senhas, hashes de senhas ou CPF.
+- Utilizamos IDs inteiros positivos.
+- Utilizamos números JSON para valores monetários.
+- Calculamos dinheiro com precisão de centavos.
+- Utilizamos preços maiores que zero.
+- Aceitamos apenas quantidades inteiras positivas nos itens.
+- Impedimos estoque negativo.
 - Identificamos clientes e vendedores pelo JWT.
 - Calculamos os valores financeiros no servidor.
-- Preservamos os valores históricos dos pedidos confirmados.
 - Retornamos arrays vazios nas listagens sem registros.
-- Informamos os tributos sem adicioná-los ao total.
+- Retornamos zero nos totais e no ticket médio quando
+  não possuímos pedidos confirmados.
+- Validamos os dados com Zod.
+- Utilizamos apenas um papel por usuário.
+- Utilizamos os papéis cliente, vendedor e admin.
+- Utilizamos os status aberto, confirmado e cancelado.
+- Utilizamos os tipos percentual, fixo e frete para cupons.
+- Utilizamos a chave erros em português, conforme a rubrica.
+
+## Padronização dos percentuais
+
+Utilizamos valores fracionários para as taxas das categorias,
+como 0.12 para representar 12%.
+
+Para cupons percentuais, utilizamos 10.00 para representar 10%.
+
+Para cupons de frete, utilizamos o valor zero.
 
 ## Preservação do histórico
 
-Preservamos os valores financeiros registrados na confirmação do pedido, incluindo os tributos e as comissões utilizados nos cálculos.
+Registramos o preço unitário, a categoria e os valores
+de tributos e comissões durante a criação dos itens.
 
-Mantemos as associações com os cupons e produtos utilizados e bloqueamos a exclusão de registros vinculados a pedidos.
+Mantemos esses valores até a confirmação e preservamos
+o histórico financeiro após a confirmação ou cancelamento.
+
+Bloqueamos a exclusão de produtos e cupons associados
+a pedidos, retornando HTTP 409.
+
+Impedimos a alteração do vendedor proprietário do produto.
+
+Utilizamos os dados históricos para calcular os relatórios
+sem depender dos preços e taxas atuais.
