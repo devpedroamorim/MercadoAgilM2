@@ -51,3 +51,24 @@ test("Rejeita senha muito curta", () => {
 
   assert.equal(resultado.success, false);
 });
+
+test("Rejeita senha com mais de 72 bytes", () => {
+  const resultado = registroSchema.safeParse({
+    papel: "cliente",
+    nome: "Cliente Teste",
+    email: "teste@email.com",
+    cpf: "52998224725",
+    uf: "SP",
+    senha: "é".repeat(40)
+  });
+
+  assert.equal(resultado.success, false);
+
+  assert.ok(
+    resultado.error.issues.some(
+      (erro) =>
+        erro.path.includes("senha") &&
+        erro.message.includes("72 bytes")
+    )
+  );
+});

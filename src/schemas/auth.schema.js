@@ -17,10 +17,15 @@ export const loginSchema = z.object({
 }).strict();
 
 // Validação de senha para novos cadastros
+
 const senhaCadastroSchema = z
   .string()
   .min(8, "A senha deve ter pelo menos 8 caracteres")
-  .max(72, "A senha deve ter no máximo 72 caracteres");
+  .max(72, "A senha deve ter no máximo 72 caracteres")
+  .refine(
+    (senha) => Buffer.byteLength(senha, "utf8") <= 72,
+    "A senha deve ter no máximo 72 bytes em UTF-8"
+  );
 
 // Cadastro de cliente
 const registroClienteSchema = z.object({
