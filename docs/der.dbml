@@ -32,8 +32,8 @@ Table sellers {
 Table categories {
   id integer [pk, increment]
   name varchar [not null, unique]
-  tax_rate decimal(5,2) [not null]
-  commission_rate decimal(5,2) [not null]
+  tax_rate decimal(5,4) [not null]
+  commission_rate decimal(5,4) [not null]
 }
 
 Table products {
@@ -58,15 +58,18 @@ Table orders {
   discount decimal(12,2) [not null, default: 0]
   shipping decimal(12,2) [not null, default: 0]
   total decimal(12,2) [not null, default: 0]
-  created_at timestamp [not null, default: `now()`]
+  created_at timestamptz [not null, default: `now()`]
 }
 
 Table order_items {
   id integer [pk, increment]
   order_id integer [not null]
   product_id integer [not null]
+  category_id integer [not null]
   quantity integer [not null]
   unit_price decimal(12,2) [not null]
+  tax_amount decimal(12,2) [not null]
+  commission_amount decimal(12,2) [not null]
 
   indexes {
     (order_id, product_id) [unique]
@@ -83,7 +86,7 @@ Table coupons {
   code varchar [not null, unique]
   type varchar [not null]
   value decimal(12,2) [not null]
-  expires_at timestamp [not null]
+  expires_at timestamptz [not null]
   minimum_value decimal(12,2) [not null, default: 0]
   cumulative boolean [not null, default: false]
 }
@@ -116,9 +119,13 @@ Ref: categories.id < products.category_id
 // Many-to-many (N:N): Orders and Products
 
 Ref: orders.id < order_items.order_id
-Ref: products.id < order_items.product_id
+Ref: products.id < order_items.product_id [delete: restrict]
+
+// Historical category
+
+Ref: categories.id < order_items.category_id [delete: restrict]
 
 // Many-to-many (N:N): Orders and Coupons
 
 Ref: orders.id < order_coupons.order_id
-Ref: coupons.id < order_coupons.coupon_id
+Ref: coupons.id < order_coupons.coupon_id [delete: restrict]
