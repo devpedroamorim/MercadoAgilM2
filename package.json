@@ -12,6 +12,7 @@
     "node": ">=18"
   },
   "dependencies": {
+    "jsonwebtoken": "^9.0.3",
     "zod": "^3.23.8"
   }
 }
