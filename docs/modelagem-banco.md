@@ -1,87 +1,102 @@
+# MercadoÁgil 2.0 — Modelagem do Banco de Dados
+
 ## Objetivo
 
-Este documento explica algumas das decisões tomadas durante a construção do DER (Diagrama Entidade-Relacionamento), para facilitar o entendimento da estrutura do banco de dados pelos integrantes do squad.
+Organizamos o banco de dados com base no código herdado do Módulo 1
+e nos requisitos da rubrica do Módulo 2.
 
-A modelagem foi desenvolvida com base no código herdado do Módulo 1 e nos requisitos da rubrica do Módulo 2.
-
-## Diagrama Entidade-Relacionamento (DER)
-
-O diagrama abaixo apresenta as nove tabelas do banco de dados,
-seus atributos e respectivos relacionamentos.
-
-![Diagrama Entidade-Relacionamento](./der.png)
+Documentamos nossas decisões para facilitar o entendimento da
+modelagem e a implementação do banco de dados.
 
 ## Convenções adotadas
 
-- Nomes de tabelas e campos em inglês.
-- Nomes de tabelas no plural.
-- Utilização de `snake_case`, como em `user_id` e `unit_price`.
+- Utilizamos nomes de tabelas e campos em inglês.
+- Utilizamos nomes de tabelas no plural.
+- Utilizamos snake_case, como em user_id e unit_price.
+
+## Diagrama Entidade-Relacionamento (DER)
+
+Dividimos o banco de dados em nove tabelas.
+
+![Diagrama Entidade-Relacionamento](./der.png)
 
 ## Entendendo as tabelas
 
 ### Users
 
-Responsável por armazenar as informações de acesso ao sistema, como e-mail, hash da senha e papel do usuário.
+Armazenamos as informações de acesso ao sistema, como e-mail,
+hash da senha e papel do usuário.
 
-Um usuário pode ser um cliente, vendedor ou administrador.
+Utilizamos três papéis: cliente, vendedor e administrador.
 
 ### Customers
 
-Armazena as informações específicas dos clientes, como nome, CPF e estado.
+Armazenamos as informações específicas dos clientes,
+como nome, CPF e estado.
 
-Mas por que separar `users` de `customers`? Não são a mesma pessoa?
+Mas por que separar users de customers?
 
-Um cliente também é um usuário, mas nem todo usuário é um cliente. Ele pode ser um vendedor ou administrador.
+Separamos as informações de acesso ao sistema das informações
+específicas de quem realiza compras.
 
-Por isso, separar as informações de acesso ao sistema das informações específicas de cada tipo de usuário.
-
-Também optamos por armazenar a UF do cliente, pois o código herdado utiliza essa informação para identificar a região e calcular o frete.
+Também armazenamos a UF do cliente para identificar a região
+de entrega e calcular o frete, mantendo a lógica do código herdado.
 
 ### Sellers
 
-Segue a mesma lógica de `customers`, mas essa tabela armazena informações específicas dos vendedores, como o nome da loja e o CNPJ.
+Seguimos a mesma lógica de customers, mas armazenamos
+informações específicas dos vendedores, como o nome da loja
+e o CNPJ.
 
-Tanto o cliente quanto o vendedor possuem uma conta na tabela `users`.
+Associamos cada vendedor à sua conta na tabela users.
 
 ### Categories
 
-Responsável por armazenar as categorias dos produtos, juntamente com suas taxas de tributos e comissões.
+Armazenamos as categorias dos produtos e suas respectivas
+taxas de tributos e comissões.
 
-Por exemplo, a categoria de eletrônicos possui uma alíquota de 12% e uma comissão de 8%.
+Por exemplo, utilizamos uma alíquota de 12% e uma comissão
+de 8% para a categoria de eletrônicos.
 
-Se essas informações fossem armazenadas diretamente em cada produto, teríamos dados repetidos.
-
-Criando uma tabela específica para categorias, conseguimos centralizar essas informações. Caso seja necessário alterar uma taxa, basta atualizar o registro da categoria, em vez de alterar todos os produtos individualmente.
+Evitamos repetir essas informações em cada produto ao criar
+uma tabela específica para categorias.
 
 ### Products
 
-Armazena os produtos disponíveis no marketplace, incluindo nome, preço atual, quantidade em estoque, vendedor e categoria.
+Armazenamos os produtos disponíveis no marketplace, incluindo
+nome, preço atual, quantidade em estoque, vendedor e categoria.
 
-Um vendedor pode possuir vários produtos, assim como uma categoria pode conter vários produtos.
+Relacionamos cada produto a um vendedor e a uma categoria.
 
-Optamos por armazenar o estoque diretamente nessa tabela, pois cada produto possui apenas uma quantidade disponível. Portanto, não precisamos criar uma tabela separada para o estoque neste projeto.
+Optamos por armazenar o estoque diretamente nessa tabela,
+pois trabalhamos com uma única quantidade disponível por produto.
 
 ### Orders
 
-Essa tabela é responsável por armazenar as informações dos pedidos de cada cliente, como subtotal, descontos, frete, valor total e data de criação.
+Armazenamos as informações gerais dos pedidos, como cliente,
+status, subtotal, descontos, frete, total e data de criação.
 
-O pedido possui três status, conforme determina a rubrica:
+Utilizamos três status:
 
-- `aberto`: o pedido ainda pode ser modificado.
-- `confirmado`: a compra foi confirmada e os produtos são retirados do estoque.
-- `cancelado`: a compra foi cancelada.
+- aberto
+- confirmado
+- cancelado
 
-Um cliente pode realizar vários pedidos, mas cada pedido pertence a apenas um cliente. Portanto, temos um relacionamento 1:N (um para muitos).
+Representamos o relacionamento entre clientes e pedidos
+como 1:N, pois associamos cada pedido a apenas um cliente
+e permitimos vários pedidos por cliente.
 
-Mas aqui temos um pequeno problema: um pedido pode conter vários produtos, e um mesmo produto pode aparecer em vários pedidos.
+Entre pedidos e produtos, temos um relacionamento N:N.
 
-Isso caracteriza um relacionamento N:N (muitos para muitos). Para representar esse relacionamento no banco de dados relacional, precisamos criar uma tabela intermediária.
+Para representar essa associação, utilizamos uma tabela
+intermediária chamada order_items.
 
 #### Order_items
 
-É uma tabela intermediária que conecta os pedidos aos produtos.
+Utilizamos essa tabela para conectar pedidos e produtos.
 
-Sua responsabilidade é informar quais produtos fazem parte de cada pedido, a quantidade comprada e o preço unitário no momento da compra.
+Armazenamos os produtos de cada pedido, suas quantidades,
+preços unitários, categorias e valores de tributos e comissões.
 
 Por exemplo:
 
@@ -91,83 +106,150 @@ Por exemplo:
 | 1      | Livro   | 1          |
 | 2      | Mouse   | 2          |
 
-Dessa forma, conseguimos identificar quais produtos pertencem a cada pedido.
+Uma das principais decisões dessa tabela é a preservação
+do preço histórico.
 
-Uma das decisões mais importantes dessa tabela é armazenar o preço histórico.
+Imagine uma compra de um mouse por R$ 120,00. Mesmo após
+uma alteração no preço para R$ 150,00, mantemos o valor
+original de R$ 120,00 no pedido.
 
-Por exemplo, se um cliente comprou um mouse por R$ 120,00 e posteriormente o produto passou a custar R$ 150,00, o pedido antigo deve continuar registrando o valor de R$ 120,00.
+Também preservamos a categoria e os valores de tributos
+e comissões registrados na compra.
 
-Por isso, o preço atual do produto e o preço do item comprado são armazenados separadamente.
+Assim, evitamos alterações nos resultados financeiros
+de pedidos antigos.
 
 ### Coupons
 
-Armazena os cupons de desconto disponíveis no marketplace.
+Armazenamos os cupons de desconto do marketplace.
 
-Cada cupom possui um código, tipo de desconto, valor, validade, valor mínimo de compra e uma indicação de que pode ou não ser combinado com outros cupons.
+Registramos o código, tipo de desconto, valor, validade,
+valor mínimo de compra e cumulatividade.
 
-Existem três tipos de cupons, conforme a rubrica:
+Utilizamos três tipos de cupons:
 
-- **Percentual:** desconto em porcentagem.
-- **Fixo:** desconto em reais.
-- **Frete:** elimina o valor do frete.
+- Percentual: desconto em porcentagem.
+- Fixo: desconto em reais.
+- Frete: frete gratuito.
 
-Os cupons são aplicados ao pedido inteiro, e não individualmente aos produtos.
+Aplicamos os cupons ao pedido inteiro, e não aos produtos
+individualmente.
 
 #### Order_coupons
 
-É uma tabela intermediária responsável por identificar quais cupons foram utilizados em cada pedido.
+Utilizamos essa tabela intermediária para conectar pedidos
+e cupons.
 
-Como um pedido pode utilizar até dois cupons e um mesmo cupom pode ser utilizado em diferentes pedidos, temos outro relacionamento N:N, desta vez entre `orders` e `coupons`.
+Permitimos até dois cupons por pedido e a utilização de um
+mesmo cupom em diferentes pedidos.
 
-Por isso, precisamos de uma tabela intermediária para registrar essas associações.
+Por isso, representamos o relacionamento entre orders
+e coupons como N:N.
 
-A combinação do identificador do pedido com o identificador do cupom também impede que o mesmo cupom seja registrado duas vezes no mesmo pedido.
+Utilizamos uma chave primária composta pelo identificador
+do pedido e pelo identificador do cupom para impedir
+associações duplicadas.
 
 ## Resumo dos relacionamentos
 
-| Tabelas               | Relacionamento                  |
-| --------------------- | ------------------------------- |
-| Users e Customers     | 1:1                             |
-| Users e Sellers       | 1:1                             |
-| Customers e Orders    | 1:N                             |
-| Sellers e Products    | 1:N                             |
-| Categories e Products | 1:N                             |
-| Orders e Products     | N:N, através de `order_items`   |
-| Orders e Coupons      | N:N, através de `order_coupons` |
+| Tabelas                  | Relacionamento                |
+| ------------------------ | ----------------------------- |
+| Users e Customers        | 1:1                           |
+| Users e Sellers          | 1:1                           |
+| Customers e Orders       | 1:N                           |
+| Sellers e Products       | 1:N                           |
+| Categories e Products    | 1:N                           |
+| Categories e Order_items | 1:N                           |
+| Orders e Products        | N:N, através de order_items   |
+| Orders e Coupons         | N:N, através de order_coupons |
 
-## Normalização
+## Normalização (3FN)
 
-A normalização serve para organizar os dados, evitar repetições desnecessárias e reduzir inconsistências.
+Organizamos os dados para evitar repetições desnecessárias
+e dependências entre informações que não pertencem à mesma
+entidade.
 
-Um exemplo disso é a separação entre produtos e categorias. Não precisamos repetir o nome, a alíquota e a comissão da categoria em cada produto, pois essas informações estão armazenadas em `categories`.
+Separamos as categorias dos produtos porque o nome,
+a alíquota e a comissão dependem da categoria.
 
-Já o armazenamento do preço histórico não é uma repetição desnecessária, pois o preço atual do produto e o preço praticado no momento da compra representam informações diferentes.
+Também utilizamos tabelas intermediárias para organizar
+os relacionamentos de muitos para muitos.
 
-## O que armazenamos e o que calculamos?
+Diferenciamos o preço atual do produto do preço histórico
+registrado no item do pedido, pois representam informações
+distintas.
 
-O subtotal, os descontos, o frete e o valor total são calculados pelas regras de negócio do sistema.
+## Preservação do histórico
 
-A proposta é armazenar esses resultados para preservar os valores financeiros dos pedidos confirmados, garantindo que futuras alterações não modifiquem o valor original da compra.
+Registramos o preço unitário, a categoria e os valores
+de tributos e comissões no momento da criação do item.
 
-Isso exige que a aplicação mantenha esses valores consistentes.
+Mantemos esses valores durante a confirmação do pedido.
 
-## Algumas restrições utilizadas
+Calculamos os tributos e as comissões sobre o valor bruto
+da linha inteira, considerando a quantidade comprada.
 
-- **PK (Primary Key):** identifica um registro de maneira única.
-- **FK (Foreign Key):** conecta um registro a outra tabela.
-- **Unique:** impede valores duplicados.
-- **Not Null:** torna um campo obrigatório.
-- **Default:** define um valor padrão.
+Armazenamos os resultados dos cálculos financeiros em orders
+para preservar os valores finais dos pedidos confirmados.
 
-Essas restrições ajudam a evitar problemas, como contas com e-mails duplicados ou produtos associados a vendedores inexistentes.
+Utilizamos essa redundância de forma intencional e mantemos
+a consistência dos valores pela camada de serviço.
 
-## Pontos pendentes para discussão
+## Representação dos valores
 
-Antes da implementação definitiva, precisamos alinhar algumas decisões com o squad:
+Utilizamos valores decimais para representar dinheiro.
 
-- Padronização dos nomes das tabelas, campos e contratos da API.
-- Restrições para impedir valores e quantidades inválidos.
-- Preservação do histórico de tributos e comissões.
-- Tratamento da exclusão de produtos que já fazem parte de pedidos.
+Para as taxas das categorias, utilizamos valores fracionários:
 
-A modelagem apresentada é uma proposta e poderá ser atualizada conforme as decisões da equipe.
+| Percentual | Valor armazenado |
+| ---------- | ---------------- |
+| 0%         | 0.00             |
+| 5%         | 0.05             |
+| 8%         | 0.08             |
+| 12%        | 0.12             |
+| 15%        | 0.15             |
+
+Mantemos esse formato para preservar a lógica de cálculo
+do código herdado.
+
+Para cupons percentuais, utilizamos 10.00 para representar 10%.
+
+## Integridade dos dados
+
+Utilizamos as seguintes restrições:
+
+- PK: identificamos cada registro de maneira única.
+- FK: conectamos registros de diferentes tabelas.
+- Unique: impedimos valores duplicados.
+- Not Null: exigimos o preenchimento de informações.
+- Default: estabelecemos valores padrões.
+- Restrict: impedimos exclusões que comprometam relacionamentos.
+
+Na implementação, validaremos também:
+
+- Preços maiores que zero.
+- Estoque maior ou igual a zero.
+- Quantidades de itens maiores que zero.
+- Taxas de categorias entre 0 e 1.
+- Valores de cupons não negativos.
+- Cupons percentuais entre 0 e 100.
+- Papéis, status e tipos de cupons válidos.
+
+## Exclusão de registros
+
+Bloqueamos a exclusão de produtos e cupons associados
+a pedidos, independentemente do status do pedido.
+
+Preservamos os relacionamentos e o histórico das compras.
+
+## Papéis dos usuários
+
+Utilizamos apenas um papel por usuário.
+
+Associamos clientes ao perfil de customers e vendedores
+ao perfil de sellers.
+
+Para administradores, utilizamos somente a tabela users.
+
+Garantiremos a correspondência entre o papel e o perfil
+na camada de serviço.

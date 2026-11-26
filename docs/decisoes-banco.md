@@ -2,34 +2,36 @@
 
 ## Banco de dados relacional (PostgreSQL)
 
-Escolhemos o PostgreSQL porque o MercadoÁgil possui diversas
-informações que se relacionam entre si, como clientes, vendedores,
-produtos, pedidos e cupons.
+Escolhemos o PostgreSQL porque trabalhamos com informações
+relacionadas entre si, como clientes, vendedores, produtos,
+pedidos e cupons.
 
-Um banco relacional permite organizar essas informações em tabelas,
-garantir a integridade dos dados e realizar consultas para gerar
-relatórios financeiros.
+Utilizamos tabelas e relacionamentos para organizar os dados,
+garantir sua integridade e facilitar a geração de relatórios
+financeiros através de consultas SQL.
 
-Além disso, permite utilizar transações, que são importantes para
-operações como a confirmação de pedidos e a atualização do estoque.
+Também contamos com transações para garantir a consistência
+de operações como a confirmação de pedidos e a atualização
+do estoque.
 
 ## NoSQL de documentos
 
-Um banco NoSQL de documentos, como o MongoDB, armazena informações
-em documentos com estruturas mais flexíveis.
+Consideramos bancos NoSQL de documentos, como o MongoDB,
+para informações com estruturas mais flexíveis.
 
-No MercadoÁgil, poderia ser utilizado para armazenar avaliações
-de produtos, comentários e outras informações que possuem
-estruturas variadas.
+Poderíamos utilizar essa tecnologia para armazenar avaliações
+e comentários sobre produtos em futuras versões do marketplace.
 
-Entretanto, para os pedidos e seus relacionamentos, consideramos
-o PostgreSQL mais adequado.
+Entretanto, optamos pelo PostgreSQL para armazenar os pedidos
+e os demais dados relacionais do sistema.
 
 ## Busca semântica
 
-A busca semântica permite encontrar informações considerando
-o significado da pesquisa, e não apenas as palavras digitadas.
+Consideramos a busca semântica como uma possibilidade para
+melhorar a pesquisa de produtos.
 
-No MercadoÁgil, poderia ser utilizada para melhorar a pesquisa
-de produtos, permitindo que os clientes encontrem itens a partir
-de descrições e intenções de compra.
+Com essa tecnologia, poderíamos encontrar produtos pelo
+significado da pesquisa, e não apenas pelas palavras digitadas.
+
+Por exemplo, poderíamos retornar mouses e teclados em uma
+pesquisa por acessórios para trabalhar no computador.
