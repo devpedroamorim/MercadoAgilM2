@@ -28,12 +28,15 @@ export function autenticar(req, res, next) {
       algorithms: ["HS256"]
     });
 
-    if (
-      !dados ||
-      typeof dados !== "object" ||
-      typeof dados.sub !== "string" ||
-      !["cliente", "vendedor", "admin"].includes(dados.papel)
-    ) {
+if (
+  !dados ||
+  typeof dados !== "object" ||
+  typeof dados.sub !== "string" ||
+  !dados.sub.trim() ||
+  !Number.isInteger(dados.exp) ||
+  !["cliente", "vendedor", "admin"].includes(dados.papel)
+) {
+
       return res.status(401).json({
         erros: ["Token inválido."]
       });
